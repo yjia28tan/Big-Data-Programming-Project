@@ -12,6 +12,10 @@ from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings('ignore')
 
+# Set title for the Page
+st.title('Customer Analysis')
+
+# Load file
 customers = pd.read_csv("olist_customers.csv")
 geolocation = pd.read_csv('olist_geolocation.csv')
 order_items = pd.read_csv('olist_order_items.csv')
@@ -21,6 +25,7 @@ orders = pd.read_csv('olist_orders.csv')
 products = pd.read_csv('olist_products.csv')
 sellers = pd.read_csv('olist_sellers.csv')
 
+# merge dataset 
 df_cus_seg= pd.merge(customers, orders, on="customer_id", how='inner')
 df_cus_seg= df_cus_seg.merge(reviews, on="order_id", how='inner')
 df_cus_seg= df_cus_seg.merge(order_items, on="order_id", how='inner')
@@ -28,7 +33,7 @@ df_cus_seg= df_cus_seg.merge(products, on="product_id", how='inner')
 df_cus_seg= df_cus_seg.merge(payments, on="order_id", how='inner')
 df_cus_seg= df_cus_seg.merge(sellers, on='seller_id', how='inner')
 
-
+# Recategorize Product Category
 def classify_cat(x):
 
     if x in ['office_furniture', 'furniture_decor', 'furniture_living_room', 'kitchen_dining_laundry_garden_furniture', 'bed_bath_table', 'home_comfort', 'home_comfort_2', 'home_construction', 'garden_tools', 'furniture_bedroom', 'furniture_mattress_and_upholstery']:
@@ -69,14 +74,12 @@ df_cus_seg['order_estimated_delivery_date'] = pd.to_datetime(df_cus_seg['order_e
 df_cus_seg['shipping_limit_date'] = pd.to_datetime(df_cus_seg['shipping_limit_date'])
 df_cus_seg['order_delivered_carrier_date'] =pd.to_datetime(df_cus_seg['order_delivered_carrier_date'])
 
-
+# Create new features to the dataframe
 df_cus_seg['estimated_days'] = (df_cus_seg['order_estimated_delivery_date'].dt.date - df_cus_seg['order_purchase_timestamp'].dt.date)
 df_cus_seg['arrival_days'] = (df_cus_seg['order_delivered_customer_date'].dt.date - df_cus_seg['order_purchase_timestamp'].dt.date)
 df_cus_seg['shipping_days'] = (df_cus_seg['order_delivered_customer_date'].dt.date - df_cus_seg['order_delivered_carrier_date'].dt.date)
 negative_shipping_days = df_cus_seg[df_cus_seg['shipping_days'] < pd.Timedelta(0)]
 indices_to_drop = negative_shipping_days.index
-
-
 df_cus_seg.drop(indices_to_drop, inplace=True)
 df_cus_seg['seller_to_carrier_status'] = (df_cus_seg['shipping_limit_date'].dt.date - df_cus_seg['order_delivered_carrier_date'].dt.date)
 df_cus_seg['seller_to_carrier_status'] = df_cus_seg['seller_to_carrier_status'].apply(lambda x: 'OnTime/Early' if x >= pd.Timedelta(0) else 'Late')
@@ -94,6 +97,7 @@ outlier_indices = df_cus_seg[(df_cus_seg['estimated_days'] > sixty_days) |
 df_cus_seg.drop(outlier_indices, inplace= True)
 df_cus_seg.reset_index(inplace= True, drop= True)
 
+# Function to rate the delivery time
 def rates(x):
 
     if x in range(0, 8):
@@ -111,14 +115,13 @@ def rates(x):
     else:
         return 'Very Slow'
 
+# Create new features for rating of the delivery time
 df_cus_seg['estimated_delivery_rate'] = df_cus_seg.estimated_days.apply(rates)
-
 df_cus_seg['arrival_delivery_rate'] = df_cus_seg.arrival_days.apply(rates)
-
 df_cus_seg['shipping_delivery_rate'] = df_cus_seg.shipping_days.apply(rates)
 
-# EDA
-# Top 10 Customers Capacity Cities
+# ========================== EDA ===========================================
+# ================================= Top 25 Customers Capacity Cities ============================
 top_10_cities = df_cus_seg['customer_city'].value_counts().head(10)
 
 # Drop unnecessary columns
@@ -126,11 +129,12 @@ orders = orders[['order_id', 'customer_id', 'order_status']] # Include only nece
 order_items = order_items[['order_id', 'order_item_id', 'product_id', 'price', 'freight_value']]
 geolocation = geolocation[['geolocation_zip_code_prefix', 'geolocation_lat', 'geolocation_lng' ]]  
 
-# Merge datasets
+# Merge datasets with geolocation
 geo_segment= pd.merge(customers, orders, on="customer_id", how='inner')
 geo_segment= geo_segment.merge(order_items, on="order_id", how='inner')
 geo_segment= geo_segment.merge(products, on="product_id", how='inner')
 
+# group customer by city
 city_segments = geo_segment.groupby('customer_city')
 
 city_metrics = city_segments.agg({
@@ -141,15 +145,13 @@ city_metrics = city_segments.agg({
 
 # Rename the columns for clarity
 city_metrics.columns = ['city', 'number_of_customers', 'number_of_orders', 'total_price']
-
+# calculate the average price per order
 city_metrics['avg_order_value'] = city_metrics['total_price'] / city_metrics['number_of_orders']
-
+# Sort data in decending order
 city_metrics_sorted = city_metrics.sort_values(by='number_of_customers', ascending=False)
 
 import plotly.express as px
 import random
-
-# Assuming city_metrics_sorted is your DataFrame containing city metrics data
 
 # Generate a list of random colors
 num_categories = len(city_metrics_sorted[:25])  # Number of categories
@@ -157,13 +159,14 @@ random_colors = [random.choice(px.colors.qualitative.Plotly) for _ in range(num_
 
 fig = px.bar(city_metrics_sorted[:25], x='city', y='number_of_customers', 
              labels={'number_of_customers': 'Number of Customers', 'city': 'City'},
-             title='Top Cities by Number of Customers',
+             title='Top 25 Cities by Number of Customers',
              color='city',  # Set the color to the 'city' column
              color_discrete_map=dict(zip(city_metrics_sorted[:25]['city'], random_colors)))  # Assign random colors to each city
 fig.update_layout(xaxis=dict(tickangle=45))
 
 st.plotly_chart(fig)
 
+# =================================== Customer distribution by state =============================================
 import plotly.express as px
 
 bins = [0, 50, 100, float('inf')]  # Define the bins for segmentation
@@ -173,7 +176,7 @@ labels = ['Low Value', 'Medium Value', 'High Value']  # Define labels for each s
 city_metrics['customer_segment'] = pd.cut(city_metrics['avg_order_value'], bins=bins, labels=labels)
 
 correlation_matrix = city_metrics[['number_of_customers', 'number_of_orders', 'total_price']].corr()
-
+# group customer by state
 state_segments = geo_segment.groupby('customer_state')
 
 state_metrics = state_segments.agg({
@@ -190,13 +193,14 @@ state_metrics_sorted = state_metrics.sort_values(by='number_of_customers', ascen
 
 fig = px.bar(state_metrics_sorted[:], x='state', y='number_of_customers', 
              labels={'number_of_customers': 'Number of Customers', 'city': 'State'},
-             title='States by Number of Customers',
+             title='Number of Customers according State',
              color='state',  # Set the color to the 'city' column
              color_discrete_map=dict(zip(state_metrics_sorted[:25]['state'], random_colors)))
 fig.update_layout(xaxis=dict(tickangle=45))
 
 st.plotly_chart(fig)
 
+# ============================================ Customer behaviour Segmentation =============================
 from datetime import datetime 
 
 df_segmentation = df_cus_seg.copy()
@@ -218,7 +222,6 @@ rfm_table['m_score'] = pd.qcut(rfm_table['Monetary'], 4, ['1','2','3','4'])
 rfm_table['rfm_score'] = 100 * rfm_table['r_score'].astype(int) + 10 * rfm_table['f_score'].astype(int)+ rfm_table['m_score'].astype(int)
 
 def customer_segmenation(rfm_score):
-  
   if rfm_score == 444:
     return 'VIP'
   
@@ -244,7 +247,6 @@ rfm_table['customer_segmentation'] = rfm_table['rfm_score'].apply(customer_segme
 
 
 for i in [0, 2]:
-
     outlier_indices = []
     col = rfm_table.columns[i]
     percentile_5 = np.percentile(rfm_table[col], 5)
