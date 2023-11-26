@@ -6,7 +6,9 @@ import os
 
 # Load the trained XGBoost model
 # change file path
-model = joblib.load("C:\\Users\\Devus Lee\\Downloads\\xgboost_model.joblib")
+model = joblib.load("C:\\Users\\User\\OneDrive\\Documents\\YiJia\\INTI\\Sem 6\\5011CEM Big Data Programming Project\\CW\\Big-Data-Programming-Project\\Code&Dataset\\cleaned dataset\\xgboost_model.joblib")
+# model = joblib.load("C:\\Users\\Devus Lee\\Downloads\\xgboost_model.joblib")
+
 
 def preprocess_input(order_id, total_purchase_value_per_order, payment_value, order_purchase_timestamp):
     # Preprocess 'order_purchase_timestamp'
@@ -19,7 +21,7 @@ def preprocess_input(order_id, total_purchase_value_per_order, payment_value, or
     return total_purchase_value_per_order, payment_value, order_month, order_hour
 
 def main():
-    st.title('XGBoost Model Deployment')
+    st.title('XGBoost Model Deployment for Customer Engagement Analysis')
 
     # Get user input
     order_id = st.text_input('Enter number of orders')
