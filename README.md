@@ -20,17 +20,21 @@ Teh Ger Min
 
 3. Customer Purchase Behavior Analysis:
 
-  - Determine the monthly number of products purchased by each customer.
+  - Determine the number of products purchased by each customer.
   - Gain insights into customer behavior to identify high-value customers and personalize marketing strategies.
 
 4. Customer Segmentation:
-  - Identify frequent customer segments based on purchasing preferences.
+  - Identify frequent customer segments based on purchasing preferences and geographical.
   - Tailor marketing strategies and product offerings to different segments for increased satisfaction and loyalty.
 
 5. Sales Trend Analysis:
-  - Analyze sales trends across daily, weekly, and monthly periods.
+  - Analyze sales trends across weekly, and monthly periods.
   - Optimize inventory management, pricing strategies, and promotional campaigns based on seasonality patterns.
 
 6. Customer Engagement Analysis:
   - Estimate the number of products purchased by each customer.
   - Identify opportunities for cross-selling and upselling to increase average order value and improve revenue.
+
+7. Customer Sentiment analysis
+  - predict customer sentiment (sastifaction) based on review scores and comments.
+  - Help in customer service, marketing, brand management, as well as social media monitoring in order to understand public opinion, and make data-driven decisions.
