@@ -123,14 +123,39 @@ plt.show()
 
 st.pyplot(plt)
 
-# =========================== Most Sell product =============================
-most_product = order_product_info.groupby('product_category').aggregate({'order_id':'count'}).rename(columns={'order_id':'order_count'}).sort_values(by='order_count',ascending=False).reset_index()
+# ============== Total Orders by Day of the Week ======================================
 
-sns.barplot(x = order_product_info.product_category.value_counts().index, y = most_product.order_count.values, data = most_product[:], palette="turbo_r")
-plt.xlabel("Product Category")
-plt.ylabel("Total Number of orders")
-plt.title("Most bought product categories")
-plt.xticks(rotation='vertical')
+orders["order_purchase_timestamp"] = pd.to_datetime(orders["order_purchase_timestamp"])
+orders["purchase_day"] = orders["order_purchase_timestamp"].dt.strftime('%A')
+
+orders['purchase_hour'] = orders['order_purchase_timestamp'].apply(lambda x: x.hour)
+hours_bins = [-0.1, 6, 12, 18, 23]
+hours_labels = ['Midnight', 'Morning', 'Afternoon', 'Night']
+orders['purchase_hour'] = pd.cut(orders['purchase_hour'], hours_bins, labels=hours_labels)
+
+purchase_day_count = orders.groupby('purchase_day')['order_id'].nunique().sort_values(ascending=False)
+purchase_day_count = purchase_day_count.rename("total_orders")
+
+plt.figure(figsize=(9, 6))
+sns.barplot(x=purchase_day_count.index, y=purchase_day_count.values, palette='turbo_r')
+plt.title('Total Orders by Day of the Week')
+plt.xlabel('Day of the Week')
+plt.ylabel('Total Orders')
+plt.show()
+
+st.pyplot(plt)
+
+# ============== Total Orders by Parts of the Day ======================================
+
+purchase_hour_count = orders.groupby('purchase_hour')['order_id'].nunique().sort_values(ascending=False)
+purchase_hour_count = purchase_hour_count.rename("total_orders")
+
+# Plot the bar chart using sns.barplot
+plt.figure(figsize=(9, 6))
+sns.barplot(x=purchase_hour_count.index, y=purchase_hour_count.values, palette='turbo_r')
+plt.title('Total Orders by Parts of the Day')
+plt.xlabel('Parts of the Day')
+plt.ylabel('Total Orders')
 plt.show()
 
 st.pyplot(plt)
